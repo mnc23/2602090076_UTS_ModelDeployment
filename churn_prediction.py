@@ -1,35 +1,23 @@
 import streamlit as st
 import pandas as pd
 import pickle
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
-from sklearn.metrics import classification_report
 
 class ModelHandler:
     def __init__(self):
         self.model = None
-        self.encoder = None
         self.scaler = None
 
-    def load_model(self, model_path='XG_churn.pkl', encoder_path='one_hot_encode.pkl', scaler_path='scaling.pkl'):
+    def load_model(self, model_path='XG_churn.pkl', scaler_path='scaling.pkl'):
         with open(model_path, 'rb') as file:
             self.model = pickle.load(file)
-        with open(encoder_path, 'rb') as file:
-            self.encoder = pickle.load(file)
         with open(scaler_path, 'rb') as file:
             self.scaler = pickle.load(file)
 
     def preprocess_data(self, input_data):
-        num_data = input_data.select_dtypes(['float64', 'int64']).columns
-        obj_data = input_data.drop(num_data, axis=1).columns
-
-        for col in obj_data:
-            enc_data = self.encoder.transform(input_data[[col]])
-            input_data = pd.concat([input_data.drop(columns=[col]), pd.DataFrame(enc_data.toarray(), columns=self.encoder.get_feature_names_out([col]))], axis=1)
-
-        scaled_col = ['CustomerId', 'CreditScore', 'Age', 'Tenure', 'Balance', 'NumOfProducts', 'EstimatedSalary']
-        input_data[scaled_cols] = self.scaler.transform(input_data[scaled_col])
+        scaled_col = ['CreditScore', 'Age', 'Tenure', 'Balance', 'NumOfProducts', 'EstimatedSalary']
+        input_data[scaled_col] = self.scaler.transform(input_data[scaled_col])
 
         return input_data
 
@@ -44,21 +32,24 @@ def main():
 
     # User input section
     credit_score = st.number_input("Credit Score:")
-    geography = st.selectbox("Geography:", ["France", "Germany", "Spain"])
-    gender = st.selectbox("Gender:", ["Male", "Female"])
-    age = st.number_input("Age:")
-    tenure = st.number_input("Tenure (years with company):")
+    
+    # Age input with validation for integers and maximum length of 3 digits
+    age = st.number_input("Age:", step=1, format="%d", max_value=100)
+
+    # Tenure slider with range 0-64
+    tenure = st.slider("Tenure (years with company):", 0, 64)
+
     balance = st.number_input("Balance (account balance):")
-    num_of_products = st.number_input("Number of Products:")
+    
+    # NumOfProducts slider with range 1-4
+    num_of_products = st.slider("Number of Products:", 1, 4)
+
     has_credit_card = st.selectbox("Has Credit Card? (Yes/No)", ["Yes", "No"])
     is_active_member = st.selectbox("Is Active Member? (Yes/No)", ["Yes", "No"])
     estimated_salary = st.number_input("Estimated Salary:")
 
     input_data = pd.DataFrame({
-        "CustomerId": [0],  # Placeholder for one-hot encoding
         "CreditScore": [credit_score],
-        "Geography": [geography],
-        "Gender": [gender],
         "Age": [age],
         "Tenure": [tenure],
         "Balance": [balance],
