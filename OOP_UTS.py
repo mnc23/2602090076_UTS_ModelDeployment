@@ -57,25 +57,25 @@ class ModelHandler:
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
             self.input_data, self.output_data, test_size=test_size, random_state=random_state)
         
-    def one_hot_encode(self):
-        num_data = self.input_data.select_dtypes(['float64', 'int64']).columns
-        obj_data = self.input_data.drop(num_data, axis=1).columns
+    # def one_hot_encode(self):
+    #     num_data = self.input_data.select_dtypes(['float64', 'int64']).columns
+    #     obj_data = self.input_data.drop(num_data, axis=1).columns
 
-        for col in obj_data:
-            encoder = OneHotEncoder(handle_unknown="ignore")
-            enc_train = encoder.fit_transform(self.x_train[[col]])
-            enc_test = encoder.transform(self.x_test[[col]])
+    #     for col in obj_data:
+    #         encoder = OneHotEncoder(handle_unknown="ignore")
+    #         enc_train = encoder.fit_transform(self.x_train[[col]])
+    #         enc_test = encoder.transform(self.x_test[[col]])
 
-            col_to_drop = [col]
+    #         col_to_drop = [col]
 
-            # Reset indices before concatenation
-            self.x_train = self.x_train.reset_index(drop=True)
-            self.x_test = self.x_test.reset_index(drop=True)
-            self.x_train = pd.concat([self.x_train.drop(columns=col_to_drop), pd.DataFrame(enc_train.toarray(), columns=encoder.get_feature_names_out(col_to_drop))], axis=1)
-            self.x_test = pd.concat([self.x_test.drop(columns=col_to_drop), pd.DataFrame(enc_test.toarray(), columns=encoder.get_feature_names_out(col_to_drop))], axis=1)
+    #         # Reset indices before concatenation
+    #         self.x_train = self.x_train.reset_index(drop=True)
+    #         self.x_test = self.x_test.reset_index(drop=True)
+    #         self.x_train = pd.concat([self.x_train.drop(columns=col_to_drop), pd.DataFrame(enc_train.toarray(), columns=encoder.get_feature_names_out(col_to_drop))], axis=1)
+    #         self.x_test = pd.concat([self.x_test.drop(columns=col_to_drop), pd.DataFrame(enc_test.toarray(), columns=encoder.get_feature_names_out(col_to_drop))], axis=1)
 
-        filename = 'one_hot_encode.pkl'
-        pkl.dump(encoder, open(filename, 'wb'))
+    #     filename = 'one_hot_encode.pkl'
+    #     pkl.dump(encoder, open(filename, 'wb'))
 
       
     def scale_data(self, scaled_cols):
@@ -95,7 +95,7 @@ class ModelHandler:
     def createModel(self):
           self.model = XGBClassifier(
             n_estimators = 100,
-            max_depth = 3,
+            max_depth = 4,
             learning_rate = 0.1
           )
       
@@ -128,13 +128,13 @@ input_df = data_handler.input_df
 output_df = data_handler.output_df
 
 model_handler = ModelHandler(input_df, output_df)
-model_handler.drop_column(['Unnamed: 0', 'id', 'Surname'])
+model_handler.drop_column(['Unnamed: 0', 'id', 'Surname', 'Geography', 'Gender', 'CustomerId'])
     
 model_handler.split_data()
 
-model_handler.one_hot_encode()
+# model_handler.one_hot_encode()
 
-model_handler.scale_data(['CustomerId', 'CreditScore', 'Age', 'Tenure', 'Balance', 'NumOfProducts', 'EstimatedSalary'])
+model_handler.scale_data(['CreditScore', 'Age', 'Tenure', 'Balance', 'NumOfProducts', 'EstimatedSalary'])
 
 model_handler.createModel()
 model_handler.train()
